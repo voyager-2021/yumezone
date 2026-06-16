@@ -1,5 +1,6 @@
 # core/db_connector.py
 import os
+import certifi
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
@@ -21,7 +22,8 @@ client = MongoClient(
     mongodb_uri,
     maxPoolSize=50,
     minPoolSize=5,
-    compressors=['snappy', 'zlib']
+    compressors=['snappy', 'zlib'],
+    tlsCAFile=certifi.where()
 )
 
 # Provide access to the database and collections
