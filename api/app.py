@@ -24,6 +24,24 @@ _RE_STRIP_ANIME_ID = re.compile(r'-\d+$')
 # All routes will display the announcement page instead of normal content.
 URGENT_ANNOUNCEMENT = False
 
+ALLOWED_IPS = set(filter(None, os.getenv("ALLOWED_IPS", "").split(",")))
+ALLOWED_HOSTNAMES = set(filter(None, os.getenv("ALLOWED_HOSTNAMES", "").split(",")))
+
+def is_allowed_request(req):
+    ip = req.remote_addr
+    host = req.host.split(":")[0]  # remove port
+
+    allowed_ips = getattr(Config, "ALLOWED_IPS", set())
+    allowed_hosts = getattr(Config, "ALLOWED_HOSTNAMES", set())
+
+    if ip in allowed_ips:
+        return True
+
+    if host in allowed_hosts:
+        return True
+
+    return False
+
 class WerkzeugRequestFilter(logging.Filter):
     def filter(self, record):
         # Suppress HTTP access/request logs (e.g. GET /static/... HTTP/1.1)
@@ -160,9 +178,21 @@ def create_app():
     def block_obvious_bots():
         if request.path.startswith('/static/'):
             return
+
+        # 1. GLOBAL ALLOWLIST OVERRIDE (VERY IMPORTANT)
+        if is_allowed_request(request):
+            return
+
+        # 2. skip API/proxy if you want (recommended)
+        if request.path.startswith(("/api/", "/proxy/", "/auth/")):
+            return
+
+        # 3. bot detection
         ua = request.headers.get('User-Agent', '')
         if is_obvious_bot_user_agent(ua):
-            app.logger.warning(f"Blocked bot UA='{ua[:80]}' PATH={request.path} IP={request.remote_addr}")
+            app.logger.warning(
+                f"Blocked bot UA='{ua[:80]}' PATH={request.path} IP={request.remote_addr}"
+            )
             abort(403)
 
     @app.before_request

@@ -1,8 +1,4 @@
 import re
-import os
-
-ALLOWED_IPS = set(filter(None, os.getenv("ALLOWED_IPS", "").split(",")))
-ALLOWED_HOSTNAMES = set(filter(None, os.getenv("ALLOWED_HOSTNAMES", "").split(",")))
 
 BLOCKED_USER_AGENT_PATTERNS = [
     r"\bheadless(?:chrome)?\b",
