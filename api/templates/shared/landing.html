@@ -1,0 +1,472 @@
+{% extends "shared/base.html" %}
+
+{% block title %}YumeZone - The Pure Anime Experience{% endblock %}
+{% block meta_description %}High-performance anime streaming. No ads, no fluff, just the content you love. Built for the modern fan.{% endblock %}
+{% block og_title %}{{ self.title() }}{% endblock %}
+{% block og_description %}{{ self.meta_description() }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@900&display=swap" rel="stylesheet">
+<style>
+:root {
+    --lp-bg: #000000;
+    --lp-text: #ffffff;
+    --lp-accent: #ff3e3e;
+    --lp-surface: #0a0a0a;
+    --lp-border: #1a1a1a;
+}
+
+.lp {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--lp-bg);
+    color: var(--lp-text);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+.lp-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 40px;
+}
+
+/* Hide global components for landing */
+.navbar, .sidebar-toggle {
+    display: none !important;
+}
+
+.main-content {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Header */
+.lp-header {
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--lp-border);
+}
+
+.lp-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -1px;
+    text-transform: uppercase;
+}
+
+.lp-logo img {
+    height: 48px;
+    width: auto;
+}
+
+.lp-logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.lp-logo-sub {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: var(--lp-accent);
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.lp-nav {
+    display: flex;
+    gap: 30px;
+}
+
+.lp-nav a {
+    text-decoration: none;
+    color: #888;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.lp-nav a:hover {
+    color: #fff;
+}
+
+/* Hero */
+.lp-hero {
+    padding: 140px 0;
+    text-align: left;
+    position: relative;
+}
+
+.lp-hero-jp {
+    position: absolute;
+    top: 100px;
+    left: -20px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15rem;
+    color: rgba(255,255,255,0.03);
+    z-index: 0;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.lp-hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.lp-title {
+    font-size: clamp(4rem, 10vw, 8rem);
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: -4px;
+    margin-bottom: 40px;
+    text-transform: uppercase;
+}
+
+.lp-title span {
+    color: var(--lp-accent);
+}
+
+.lp-hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 100px;
+    align-items: center;
+}
+
+.lp-description {
+    font-size: 1.25rem;
+    color: #adadad;
+    line-height: 1.5;
+    max-width: 500px;
+}
+
+.lp-cta-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.lp-main-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--lp-accent);
+    color: #fff;
+    padding: 24px 48px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: transform 0.3s, background 0.3s, box-shadow 0.3s;
+}
+
+.lp-main-btn:hover {
+    transform: scale(1.02) translateY(-2px);
+    background: #e63535;
+    box-shadow: 0 0 30px rgba(255, 62, 62, 0.4);
+    color: #fff;
+}
+
+/* Features */
+.lp-features {
+    padding: 100px 0;
+    border-top: 1px solid var(--lp-border);
+}
+
+.lp-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--lp-border);
+}
+
+.lp-feature-item {
+    background: var(--lp-bg);
+    padding: 60px;
+    transition: background 0.3s;
+}
+
+.lp-feature-item:hover {
+    background: var(--lp-surface);
+}
+
+.lp-feature-num {
+    font-size: 0.9rem;
+    color: var(--lp-accent);
+    margin-bottom: 40px;
+    display: block;
+    font-weight: 700;
+}
+
+.lp-feature-title {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    letter-spacing: -1px;
+}
+
+.lp-feature-desc {
+    color: #888;
+    line-height: 1.6;
+}
+
+/* Footer */
+.lp-footer {
+    padding: 80px 0;
+    border-top: 1px solid var(--lp-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lp-footer-copy {
+    color: #444;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 1024px) {
+    .lp-hero-grid {
+        grid-template-columns: 1fr;
+        gap: 60px;
+    }
+    .lp-feature-grid {
+        grid-template-columns: 1fr;
+    }
+    .lp-hero-jp {
+        font-size: 10rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .lp-container {
+        padding: 0 16px;
+    }
+    
+    .lp-header {
+        height: 80px;
+    }
+    
+    .lp-nav {
+        gap: 15px;
+    }
+    
+    .lp-nav a:not(:first-child):not(:last-child) {
+        display: none; /* Keep only Anime and Discord/GitHub on small tablets */
+    }
+
+    .lp-hero {
+        padding: 80px 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .lp-container {
+        padding: 0 16px;
+    }
+    
+    .lp-header {
+        height: 80px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .lp-logo {
+        font-size: 1.2rem;
+        gap: 8px;
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    .lp-logo img {
+        height: 40px;
+    }
+
+    .lp-logo-text span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .lp-nav {
+        display: flex !important;
+        gap: 16px !important;
+        flex-shrink: 0;
+    }
+    
+    .lp-nav a {
+        display: none;
+        background: none !important;
+        color: #fff !important;
+        padding: 0 !important;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-transform: none;
+        letter-spacing: normal;
+    }
+
+    .lp-nav a:nth-child(1),
+    .lp-nav a:nth-child(2) {
+        display: block !important;
+    }
+
+    .lp-nav a:active {
+        transform: scale(0.95);
+    }
+
+    .lp-hero {
+        padding: 48px 0 60px;
+    }
+
+    .lp-title {
+        font-size: 3.2rem;
+        letter-spacing: -2px;
+        margin-bottom: 24px;
+        text-align: center;
+    }
+    
+    .lp-hero-jp {
+        font-size: 6rem;
+        top: 30px;
+        left: 0;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .lp-description {
+        font-size: 1.1rem;
+        text-align: center;
+        margin: 0 auto 32px;
+    }
+    
+    .lp-hero-grid {
+        text-align: center;
+        gap: 40px;
+    }
+    
+    .lp-cta-group {
+        align-items: center;
+    }
+    
+    .lp-main-btn {
+        width: 100%;
+        padding: 18px 24px;
+        font-size: 1.1rem;
+    }
+    
+    .lp-feature-item {
+        padding: 40px 24px;
+    }
+    
+    .lp-feature-title {
+        font-size: 1.6rem;
+    }
+    
+    .lp-footer {
+        flex-direction: column;
+        gap: 32px;
+        text-align: center;
+        padding: 60px 0;
+    }
+    
+    .lp-footer .lp-nav {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lp">
+    <div class="lp-container">
+        <!-- Header -->
+        <header class="lp-header">
+            <div class="lp-logo">
+                <img src="{{ url_for('static', filename='images/logos/no-bg-logo.png') }}" alt="YumeZone Logo">
+                <div class="lp-logo-text">
+                    <span>YumeZone</span>
+                </div>
+            </div>
+            <nav class="lp-nav">
+                <a href="/home">Anime</a>
+                <a href="/manga">Manga</a>
+                <a href="https://github.com/OTAKUWeBer/YumeZone" target="_blank">GitHub</a>
+                <a href="https://discord.gg/SmxmsCZyRc" target="_blank">Discord</a>
+            </nav>
+        </header>
+
+        <!-- Hero -->
+        <section class="lp-hero">
+            <div class="lp-hero-jp">夢の領域</div>
+            <div class="lp-hero-content">
+                <div class="lp-hero-grid">
+                    <div>
+                        <h1 class="lp-title">The Pure<span>.</span><br>Anime & Manga<br>Experience</h1>
+                        <p class="lp-description">
+                            A high-performance hub for the modern fan. Stream thousands of anime titles in HD and read your favorite manga chapters — all in one zero-clutter interface.
+                        </p>
+                    </div>
+                    <div class="lp-cta-group">
+                        <a href="/home" class="lp-main-btn">Start Exploring — Free</a>
+                        <a href="/manga" class="lp-main-btn" style="background: rgba(255, 62, 62, 0.05); border: 1.5px solid var(--lp-accent); color: var(--lp-text);">Read Manga — Free</a>
+                        <div style="color: #444; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase;">
+                            No Ads / No Subscriptions / Always Open
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section class="lp-features">
+            <div class="lp-feature-grid">
+                <div class="lp-feature-item">
+                    <span class="lp-feature-num">01</span>
+                    <h3 class="lp-feature-title">Unified Library</h3>
+                    <p class="lp-feature-desc">Switch between high-fidelity anime streams and crisp manga scans instantly. One account, one history, one destination.</p>
+                </div>
+                <div class="lp-feature-item">
+                    <span class="lp-feature-num">02</span>
+                    <h3 class="lp-feature-title">AniList Native</h3>
+                    <p class="lp-feature-desc">Deep integration for both anime and manga. Your progress, scores, and status update in real-time as you watch or read.</p>
+                </div>
+                <div class="lp-feature-item">
+                    <span class="lp-feature-num">03</span>
+                    <h3 class="lp-feature-title">Pure Performance</h3>
+                    <p class="lp-feature-desc">Adaptive bitrate streaming and optimized image loading. Zero buffering, zero clutter, just the content you love.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="lp-footer">
+            <div class="lp-logo" style="font-size: 1.2rem;">
+                <img src="{{ url_for('static', filename='images/logos/no-bg-logo.png') }}" alt="YumeZone Logo" style="height: 32px;">
+                <div class="lp-logo-text">
+                    <span>YumeZone</span>
+                </div>
+            </div>
+            <div class="lp-footer-copy">© 2026 YumeZone. Built for the community.</div>
+            <div class="lp-nav" style="gap: 15px;">
+                <a href="/terms">Terms</a>
+                <a href="/privacy">Privacy</a>
+                <a href="/dmca">DMCA</a>
+            </div>
+        </footer>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Pure monochrome logic - minimal interactions needed
+</script>
+{% endblock %}

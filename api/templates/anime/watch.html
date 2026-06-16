@@ -1,0 +1,1474 @@
+{% extends "shared/base.html" %}
+
+{% block title %}{{ anime_title }}, Episode {{ Episode }} - YumeZone{% endblock %}
+{% block meta_description %}Watch {{ anime_title }} Episode {{ Episode }} online in HD quality.{% endblock %}
+{% block og_title %}{{ self.title() }}{% endblock %}
+{% block og_description %}{{ self.meta_description() }}{% endblock %}
+{% block og_image %}{{ episode_image or (anime.banner or anime.poster or anime.image if anime else '') }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/watch.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/comments.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <a href="/anime/{{ back_to_ep }}" class="btn btn-ghost" style="margin-bottom: var(--space-md);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Back to Details
+    </a>
+
+        <div class="watch-layout">
+
+        <!-- Main -->
+        <div class="watch-main">
+            <!-- Right Column: Video Player & Settings -->
+            <div class="watch-player-column">
+            {% if episodes_unavailable %}
+            <!-- Episodes Unavailable / Upcoming Banner -->
+            <div class="video-wrapper" id="video-wrapper" style="position: relative;">
+                <div class="episodes-unavailable-card">
+                    {% if anime and (anime.get('coverImage') or anime.get('poster') or anime.get('banner') or anime.get('image')) %}
+                    <div class="eu-backdrop">
+                        <img src="{{ anime.get('banner') or anime.get('coverImage') or anime.get('poster') or anime.get('image') }}" alt="{{ anime_title or '' }}">
+                    </div>
+                    {% endif %}
+                    <div class="eu-overlay"></div>
+                    <div class="eu-content">
+                        <div class="eu-icon">
+                            {% if next_episode_schedule and next_episode_schedule.airingTimestamp %}
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            {% else %}
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                            {% endif %}
+                        </div>
+
+                        <h2 class="eu-title">
+                            {% if next_episode_schedule and next_episode_schedule.airingTimestamp %}
+                                Coming Soon
+                            {% else %}
+                                Episodes Unavailable
+                            {% endif %}
+                        </h2>
+
+                        <p class="eu-subtitle">
+                            {% if next_episode_schedule and next_episode_schedule.airingTimestamp %}
+                                {{ anime_title or 'This anime' }} is upcoming. Episodes will be available once they air.
+                            {% else %}
+                                Episodes for <strong>{{ anime_title or 'this anime' }}</strong> are not available yet.
+                            {% endif %}
+                        </p>
+
+                        {% if next_episode_schedule and next_episode_schedule.airingTimestamp %}
+                        <div class="eu-countdown-wrapper" id="eu-countdown-wrapper" data-timestamp="{{ next_episode_schedule.airingTimestamp }}">
+                            <div class="eu-countdown-label">
+                                <svg width="14" height="14" viewBox="0 0 448 512" fill="currentColor">
+                                    <path d="M224 512c35.32 0 63.97-28.65 63.97-64H160.03c0 35.35 28.65 64 63.97 64zm215.39-149.71c-19.32-20.76-55.47-51.99-55.47-154.29 0-77.7-54.48-139.9-127.94-155.16V32c0-17.67-14.32-32-31.98-32s-31.98 14.33-31.98 32v20.84C118.56 68.1 64.08 130.3 64.08 208c0 102.3-36.15 133.53-55.47 154.29-6 6.45-8.66 14.16-8.61 21.71.11 16.4 12.98 32 32.1 32h383.8c19.12 0 32-15.6 32.1-32 .05-7.55-2.61-15.27-8.61-21.71z"/>
+                                </svg>
+                                Episode {{ next_episode_schedule.episode or '?' }} airs in
+                            </div>
+                            <div class="eu-countdown-timer" id="eu-countdown-timer">
+                                <div class="eu-countdown-block">
+                                    <span class="eu-countdown-num" id="eu-days">--</span>
+                                    <span class="eu-countdown-unit">Days</span>
+                                </div>
+                                <span class="eu-countdown-sep">:</span>
+                                <div class="eu-countdown-block">
+                                    <span class="eu-countdown-num" id="eu-hours">--</span>
+                                    <span class="eu-countdown-unit">Hours</span>
+                                </div>
+                                <span class="eu-countdown-sep">:</span>
+                                <div class="eu-countdown-block">
+                                    <span class="eu-countdown-num" id="eu-mins">--</span>
+                                    <span class="eu-countdown-unit">Min</span>
+                                </div>
+                                <span class="eu-countdown-sep">:</span>
+                                <div class="eu-countdown-block">
+                                    <span class="eu-countdown-num" id="eu-secs">--</span>
+                                    <span class="eu-countdown-unit">Sec</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <a href="/anime/{{ anime_id }}" class="btn btn-primary btn-lg eu-details-btn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            View Anime Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Normal Video Player -->
+            <!-- Video Player -->
+            <div class="video-wrapper" id="video-wrapper" style="position:relative;">
+                <!-- Custom HLS.js player injected by watch.js -->
+                <div id="player-area" style="width:100%;aspect-ratio:16/9;background:#000;position:relative;overflow:hidden;">
+                    <div class="player-skeleton skeleton" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #0c0c0c; z-index: 10;">
+                        <div style="text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 16px;">
+                            <div class="yz-spinner" style="border-top-color: var(--accent);"></div>
+                            <span style="font-size: 0.85rem; font-weight: 600; letter-spacing: 1.5px; opacity: 0.75; text-transform: uppercase;">RESOLVING STREAM SOURCES...</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Error fallback -->
+                <div id="errorFallbackContainer" style="aspect-ratio:16/9;display:none;align-items:center;justify-content:center;background:var(--bg-surface);">
+                    <div class="text-center">
+                        <div class="no-results-icon">🔌</div>
+                        <p class="text-muted">No playable sources found for this episode.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Sleek Top Quick Settings & Navigation Bar -->
+            <div class="watch-quick-bar">
+                <div class="quick-bar-left">
+                    <label class="quick-toggle" id="q-autoplay">
+                        <input type="checkbox" id="chk-autoplay">
+                        <span class="indicator"></span>
+                        <span class="label">Autoplay</span>
+                    </label>
+                    <label class="quick-toggle" id="q-autoskip">
+                        <input type="checkbox" id="chk-autoskip">
+                        <span class="indicator"></span>
+                        <span class="label">Auto Skip</span>
+                    </label>
+                    <label class="quick-toggle" id="q-autonext">
+                        <input type="checkbox" id="chk-autonext">
+                        <span class="indicator"></span>
+                        <span class="label">Auto Next</span>
+                    </label>
+                    <label class="quick-toggle" id="q-skipfiller" title="Auto skip filler episodes">
+                        <input type="checkbox" id="chk-skipfiller">
+                        <span class="indicator"></span>
+                        <span class="label">Skip Filler</span>
+                    </label>
+                    <button class="quick-btn" id="btn-shortcuts">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="quick-icon" style="margin-right: 4px;">
+                            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                            <line x1="6" y1="8" x2="6.01" y2="8"></line>
+                            <line x1="10" y1="8" x2="10.01" y2="8"></line>
+                            <line x1="14" y1="8" x2="14.01" y2="8"></line>
+                            <line x1="18" y1="8" x2="18.01" y2="8"></line>
+                            <line x1="6" y1="12" x2="6.01" y2="12"></line>
+                            <line x1="10" y1="12" x2="10.01" y2="12"></line>
+                            <line x1="14" y1="12" x2="14.01" y2="12"></line>
+                            <line x1="18" y1="12" x2="18.01" y2="12"></line>
+                            <line x1="7" y1="16" x2="17" y2="16"></line>
+                        </svg>
+                        <span>Shortcuts</span>
+                    </button>
+                    <button class="quick-btn" id="btn-lightsoff">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="quick-icon" style="margin-right: 4px;">
+                            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .5 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path>
+                            <line x1="9" y1="18" x2="15" y2="18"></line>
+                            <line x1="10" y1="22" x2="14" y2="22"></line>
+                        </svg>
+                        <span>Lights Off</span>
+                    </button>
+                    <button class="quick-btn" id="btn-native">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="quick-icon" style="margin-right: 4px;">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        <span>Natv</span>
+                    </button>
+                    <!-- PC-only Sidebar Toggle Button -->
+                    <button class="quick-btn pc-only-btn" id="btn-toggle-sidebar" title="Toggle Sidebar (T)">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="quick-icon" style="margin-right: 4px;">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                        </svg>
+                        <span>Sidebar</span>
+                    </button>
+                    <!-- PC-only Layout Flip Button -->
+                    <button class="quick-btn pc-only-btn" id="btn-flip-layout" title="Flip Layout (Sidebar Left/Right)">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="quick-icon" style="margin-right: 4px;">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                            <path d="M17 9l-3 3 3 3M5 15l3-3-3-3"></path>
+                        </svg>
+                        <span>Flip Layout</span>
+                    </button>
+                </div>
+            </div>
+
+
+
+            <!-- Episode Controls & Info Section -->
+            <div id="watch-navigation" style="margin-top: 15px;">
+                <!-- Navigation + Language Row -->
+                <div class="watch-nav-bar">
+                    <div class="watch-nav-left">
+                        <a href="{% if prev_episode_url %}{{ prev_episode_url }}{% else %}javascript:void(0){% endif %}"
+                            class="btn btn-sm {% if not prev_episode_url %}btn-ghost{% else %}btn-primary{% endif %}" {%
+                            if not prev_episode_url %}onclick="return false;" aria-disabled="true" {% endif %}
+                            style="{% if not prev_episode_url %}opacity: 0.5; cursor: not-allowed;{% endif %} display: flex; align-items: center; gap: 5px; padding: 6px 12px; font-size: 0.85rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                            Prev
+                        </a>
+                        <a id="next-episode-btn" href="{% if next_episode_url %}{{ next_episode_url }}{% else %}javascript:void(0){% endif %}"
+                            class="btn btn-sm {% if not next_episode_url %}btn-ghost{% else %}btn-primary{% endif %}" {%
+                            if next_episode_url %}onclick="window._forceEpisodeComplete = true;" {% else
+                            %}onclick="return false;" aria-disabled="true" {% endif %}
+                            style="{% if not next_episode_url %}opacity: 0.5; cursor: not-allowed;{% endif %} display: flex; align-items: center; gap: 5px; padding: 6px 12px; font-size: 0.85rem;">
+                            Next
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <div class="watch-nav-right">
+                        <!-- Language Selection -->
+                        <div class="lang-toggle">
+                            <button id="btnSub" class="lang-btn {% if lang == 'sub' %}active{% endif %}"
+                                onclick="switchLanguage('sub')">SUB</button>
+                            {% if dub_available %}
+                            <button id="btnDub" class="lang-btn {% if lang == 'dub' %}active{% endif %}"
+                                onclick="switchLanguage('dub')">DUB</button>
+                            {% else %}
+                            <button id="btnDub" class="lang-btn" disabled title="Dub not available">DUB</button>
+                            {% endif %}
+                        </div>
+
+                        <!-- Watch Together Button -->
+                        <button id="watchTogetherBtn" class="premium-action-btn watch-together-trigger" type="button" title="Watch together">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <span class="watch-together-label">Together</span>
+                        </button>
+
+                        <!-- Report Issue Button -->
+                        <button id="quickReportBtn" class="premium-action-btn" onclick="if(window.openFixModal) window.openFixModal()" title="Report playback issue">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                                <line x1="4" y1="22" x2="4" y2="15"></line>
+                            </svg>
+                            <span class="report-label">Report</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Episode Info Bar - Responsive -->
+                <div
+                    style="display: flex; flex-direction: column; gap: 12px; background: var(--bg-surface); padding: 12px 15px; border-radius: var(--radius-md); margin-bottom: 15px;">
+                    <!-- Episode Title -->
+                    <h3 id="watch-episode-title" style="margin: 0; font-size: 1rem; color: var(--text-primary); line-height: 1.4;">
+                        {{ Episode }}. {{ episode_title if episode_title else (anime_title if anime_title else
+                        'Episode') }}
+                    </h3>
+
+                    <!-- Controls Row -->
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 5px;">
+                        <!-- Server Sections: INTERNAL (HLS) & EXTERNAL (Embed) -->
+                        {% if episodes and episodes.providers_map %}
+                        {% set default_p = selected_server or episodes.default_provider %}
+                        <div class="server-sections" id="serverSections">
+                            <!-- INTERNAL (HLS) -->
+                            {% set hls_providers = [] %}
+                            {% for p_name in (sorted_providers if sorted_providers else episodes.providers_map) %}
+                                {% set caps = provider_capabilities_map.get(p_name, {"hls": true, "embed": false}) %}
+                                {% if caps.get("hls", true) %}
+                                    {% set _ = hls_providers.append(p_name) %}
+                                  {% endif %}
+                            {% endfor %}
+                            {% if hls_providers %}
+                            <div class="server-section">
+                                <div class="server-section-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                    INTERNAL
+                                </div>
+                                <div class="server-section-pills" id="hlsServerPills">
+                                    {% for p_name in hls_providers %}
+                                    {% set caps = provider_capabilities_map.get(p_name, {"hls": true, "embed": false}) %}
+                                    <button
+                                        class="server-pill {% if p_name == default_p and (source_type == 'hls' or source_type == 'mp4') %}active{% endif %}"
+                                        data-stream-type="hls" data-provider="{{ p_name }}">
+                                        {{ p_name | title }}
+                                    </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            <!-- EXTERNAL (Embed) -->
+                            {% set embed_providers = [] %}
+                            {% for p_name in (sorted_providers if sorted_providers else episodes.providers_map) %}
+                                {% set caps = provider_capabilities_map.get(p_name, {"hls": true, "embed": false}) %}
+                                {% if caps.get("embed", false) %}
+                                    {% set _ = embed_providers.append(p_name) %}
+                                  {% endif %}
+                            {% endfor %}
+                            {% if embed_providers %}
+                            <div class="server-section">
+                                <div class="server-section-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                                    </svg>
+                                    EXTERNAL
+                                </div>
+                                <div class="server-section-pills" id="embedServerPills">
+                                    {% for p_name in embed_providers %}
+                                    <button
+                                        class="server-pill {% if p_name == default_p and source_type == 'embed' %}active{% endif %}"
+                                        data-stream-type="embed" data-provider="{{ p_name }}">
+                                        {{ p_name | title }}
+                                    </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <!-- Fallback Premium Server Pill Skeletons while loading -->
+                        <div class="server-sections" id="serverSections">
+                            <div class="server-section">
+                                <div class="server-section-label skeleton" style="width: 72px; height: 13px; border-radius: var(--radius-sm); margin-bottom: 8px;"></div>
+                                <div class="server-section-pills" id="hlsServerPills">
+                                    <div class="skeleton" style="width: 80px; height: 28px; border-radius: var(--radius-full);"></div>
+                                    <div class="skeleton" style="width: 75px; height: 28px; border-radius: var(--radius-full); opacity: 0.65;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+
+                    </div>
+                </div>
+
+                <!-- Next Episode Air Time (if available) -->
+                {% if next_air_time %}
+                <div
+                    style="background: rgba(var(--warning-rgb, 245, 158, 11), 0.1); border-left: 3px solid var(--warning); padding: 10px 12px; border-radius: var(--radius-md); margin-bottom: 15px;">
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">
+                        <strong>Episode {{ Episode|int + 1 }} will air on:</strong> {{ next_air_time }}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Next Episode Countdown -->
+            {% if next_episode_schedule and next_episode_schedule.airingTimestamp %}
+            {% set next_ep = next_episode_schedule.episode %}
+            <div id="watch-countdown" data-timestamp="{{ next_episode_schedule.airingTimestamp }}" style="background: rgba(var(--info-rgb, 59, 130, 246), 0.1);
+                        border-left: 3px solid var(--info);
+                        padding: 10px 12px;
+                        border-radius: var(--radius-md);
+                        margin-bottom: 15px;">
+
+                <p style="margin: 0;
+                        font-size: 0.9rem;
+                        color: var(--text-secondary);
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;">
+
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="14" height="14"
+                        fill="currentColor" aria-hidden="true">
+                        <path
+                            d="M224 512c35.32 0 63.97-28.65 63.97-64H160.03c0 35.35 28.65 64 63.97 64zm215.39-149.71c-19.32-20.76-55.47-51.99-55.47-154.29 0-77.7-54.48-139.9-127.94-155.16V32c0-17.67-14.32-32-31.98-32s-31.98 14.33-31.98 32v20.84C118.56 68.1 64.08 130.3 64.08 208c0 102.3-36.15 133.53-55.47 154.29-6 6.45-8.66 14.16-8.61 21.71.11 16.4 12.98 32 32.1 32h383.8c19.12 0 32-15.6 32.1-32 .05-7.55-2.61-15.27-8.61-21.71z" />
+                    </svg>
+
+                    <strong>
+                        Episode {{ next_ep if next_ep else '??' }} will air on:
+                    </strong>
+
+                    <span id="countdown-text">Loading...</span>
+                </p>
+            </div>
+
+            {% endif %}
+
+
+
+<!-- ========================================== -->
+<!-- ANIME INFO SECTION -->
+<!-- ========================================== -->
+{% if anime %}
+<div class="anime-details-section" style="margin-top: 20px;">
+    <div class="anime-details-grid">
+
+        <!-- Left Column: Poster -->
+        <div class="anime-side">
+            <img src="{{ anime.get('coverImage') or anime.get('poster') }}" alt="Poster" class="anime-poster">
+        </div>
+
+        <!-- Right Column: Details -->
+        <div class="anime-main" style="min-width: 0;">
+            <div class="anime-title-block">
+                <h1 class="anime-title-main">{{ anime.name or anime.title }}</h1>
+                {% if anime.jname or anime.japanese_title %}
+                <p class="anime-title-sub">
+                    {{ anime.jname or anime.japanese_title }}
+                </p>
+                {% endif %}
+            </div>
+
+            <div class="tag-list">
+                {% for genre in anime.get('genres', []) %}
+                <a href="/genre/{{ genre | lower | replace(' ', '-') }}" class="tag-pill genre-link">
+                    {{ genre }}
+                </a>
+                {% endfor %}
+
+                {% if anime.get('studios') and anime.get('studios')|length > 0 %}
+                <a href="/studio/{{ anime.get('studios')[0].id }}" class="tag-pill studio-link" style="background: rgba(255,255,255,0.1); color: var(--text-secondary); text-decoration: none; transition: all 0.2s;">
+                    Studio: {{ anime.get('studios')[0].name }}
+                </a>
+                <style>
+                    .studio-link:hover {
+                        background: rgba(255, 71, 87, 0.2) !important;
+                        color: #ff4757 !important;
+                    }
+                </style>
+                {% endif %}
+            </div>
+
+            <!-- Synopsis with basic clean up -->
+            <div class="anime-synopsis">
+                {{ (anime.get('description') or anime.get('synopsis') or 'No description available for this anime.')
+                | striptags }}
+            </div>
+
+            <!-- Franchise Seasons moved to sidebar -->
+
+            <!-- Characters section removed from watch page for compactness -->
+
+    </div>
+
+</div>
+</div>
+{% endif %}
+
+<!-- ========================================== -->
+<!-- EPISODE REACTIONS & COMMENTS               -->
+<!-- ========================================== -->
+    <!-- Episode Reaction Bar -->
+    <div class="episode-reaction-bar" style="margin-top: 20px;">
+        <span class="episode-reaction-label">Did you enjoy this episode?</span>
+        <div class="episode-reaction-btns">
+            <button class="reaction-btn" id="ep-like-btn" title="Like this episode">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z" />
+                    <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                </svg>
+                <span class="reaction-count" id="ep-like-count">0</span>
+            </button>
+            <button class="reaction-btn" id="ep-dislike-btn" title="Dislike this episode">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3z" />
+                    <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" />
+                </svg>
+                <span class="reaction-count" id="ep-dislike-count">0</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Comment Section -->
+    <div class="comment-section">
+        <div class="comment-section-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <h3>Comments</h3>
+            <span class="comment-total-badge" id="comment-total">0</span>
+        </div>
+
+        {% if session.get('username') %}
+        <!-- Input area (logged in) -->
+        <div class="comment-input-area">
+            <div class="comment-input-row">
+                {% if session.get('avatar') %}
+                <img class="comment-avatar" src="{{ session.get('avatar') }}" alt="{{ session.get('username') }}"
+                    onerror="this.src='https://ui-avatars.com/api/?name={{ session.get('username', 'U') }}&size=72&background=1a1a1a&color=fff&bold=true'">
+                {% else %}
+                <div class="comment-avatar-placeholder">{{ session.get('username', 'U')[0]|upper }}</div>
+                {% endif %}
+
+                <div class="comment-input-wrapper">
+                    <textarea id="main-comment-textarea" class="comment-textarea"
+                        placeholder="Share your thoughts about this episode…"></textarea>
+                    <div id="main-gif-preview" class="comment-gif-preview" style="display:none;">
+                        <img id="main-gif-img" src="" alt="Selected GIF">
+                        <button class="comment-gif-remove" id="main-gif-remove" title="Remove GIF">✕</button>
+                    </div>
+                    <div class="comment-input-actions">
+                        <button type="button" class="comment-gif-btn" id="main-gif-btn" title="Add GIF">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                            </svg>
+                            <span>GIF</span>
+                        </button>
+                        <button class="comment-submit-btn" id="main-submit-btn" title="Post comment">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            </svg>
+                            <span>Post</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="comment-login-prompt">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="vertical-align:middle;margin-right:6px;">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <button class="inline-link" onclick="openLoginModal()">Sign in</button> to leave a comment.
+        </div>
+        {% endif %}
+
+        <!-- Comment list -->
+        <div class="comment-list" id="comment-list">
+            <div class="comment-list-loading">
+                <div class="comment-spinner"></div>
+                <span>Loading comments…</span>
+            </div>
+        </div>
+    </div>
+
+    </div> <!-- End watch-player-column -->
+
+    <!-- Left Column: Sidebar (Episodes, Seasons, Related) -->
+    <div class="watch-sidebar-column">
+        <!-- Episodes Container -->
+        <div class="episode-sidebar">
+            <div class="episode-sidebar-header">
+                <div class="episode-sidebar-header-top">
+                    <span>Episodes</span>
+                    <div class="view-toggle">
+                        <button class="view-btn active" id="view-grid-btn" title="Grid View">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                        </button>
+                        <button class="view-btn" id="view-list-btn" title="List View">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="episode-search-wrapper">
+                    <svg class="episode-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="episodeSearch" class="episode-search-input"
+                        placeholder="Search episode...">
+                </div>
+            </div>
+
+            <div class="episode-sidebar-list" id="episodeList" data-view="grid">
+                {% if episodes_unavailable %}
+                <div class="episodes-empty-state">
+                    <div class="ee-icon">
+                        {% if next_episode_schedule and next_episode_schedule.airingTimestamp %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        {% else %}
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <h3>
+                        {% if next_episode_schedule and next_episode_schedule.airingTimestamp %}
+                            Upcoming Anime
+                        {% else %}
+                            No Episodes Yet
+                        {% endif %}
+                    </h3>
+                    <p>
+                        {% if next_episode_schedule and next_episode_schedule.airingTimestamp %}
+                            Episodes will appear here once they start airing.
+                        {% else %}
+                            We couldn't find any episodes for this anime. Check back later!
+                        {% endif %}
+                    </p>
+                </div>
+                {% elif not episodes %}
+                <!-- Premium Shimmer Skeletons while loading episodes -->
+                <div class="episode-sidebar-skeletons" style="display: contents; width: 100%;">
+                    {% for i in range(24) %}
+                    <div class="episode-sidebar-item skeleton" style="height: 52px; pointer-events: none; border: none; opacity: {{ 1.0 - (i * 0.038) }};"></div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {% for ep in episodes.episodes %}
+                {% set is_current = (ep.number|string == episode_number|string) or (ep.number|int == Episode|int) %}
+                <a href="/watch/{{ anime_id or eps_title.split('?')[0] }}/ep-{{ ep.number }}"
+                    class="episode-sidebar-item {% if is_current %}current{% endif %} {% if ep.isFiller %}is-filler{% endif %}"
+                    data-number="{{ ep.number }}">
+                    <div class="episode-sidebar-num">{{ ep.number }}</div>
+                    <div class="episode-info">
+                        <div class="episode-title">
+                            {{ ep.title }}
+                            {% if ep.isFiller %}
+                            <span class="filler-badge">Filler</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Seasons Section (below episodes) -->
+        {% if anime %}
+        {% set all_seasons_sidebar = [] %}
+        {% set seen_sidebar_ids = [] %}
+
+        {% for p in anime.prequels %}
+        {% if (p.id|string) not in seen_sidebar_ids %}
+        {% set _ = all_seasons_sidebar.append(p) %}
+        {% set _ = seen_sidebar_ids.append(p.id|string) %}
+        {% endif %}
+        {% endfor %}
+
+        {% set current_entry_sb = {"id": anime.anilistId or anime.id, "name": anime.title or anime.name, "poster": anime.poster, "isCurrent": true, "type": anime.type or anime.get('stats', {}).get('type', 'TV')} %}
+        {% if (current_entry_sb.id|string) not in seen_sidebar_ids %}
+        {% set _ = all_seasons_sidebar.append(current_entry_sb) %}
+        {% set _ = seen_sidebar_ids.append(current_entry_sb.id|string) %}
+        {% endif %}
+
+        {% for s in anime.sequels %}
+        {% if (s.id|string) not in seen_sidebar_ids %}
+        {% set _ = all_seasons_sidebar.append(s) %}
+        {% set _ = seen_sidebar_ids.append(s.id|string) %}
+        {% endif %}
+        {% endfor %}
+
+        {% if all_seasons_sidebar|length > 1 %}
+        <div class="watch-sidebar-section">
+            <div class="watch-sidebar-section-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+                <span>Seasons</span>
+            </div>
+            <div class="watch-seasons-grid">
+                {% set ns = namespace(season_num=0) %}
+                {% for rel in all_seasons_sidebar %}
+                {% set season_type = (rel.type or 'TV')|upper %}
+                {% if season_type == 'MOVIE' %}
+                    {% set season_label = 'Movies' %}
+                {% elif season_type in ['OVA', 'ONA', 'SPECIAL', 'MUSIC'] %}
+                    {% set season_label = 'Specials' %}
+                {% else %}
+                    {% set ns.season_num = ns.season_num + 1 %}
+                    {% set season_label = 'Season ' ~ ns.season_num %}
+                {% endif %}
+                <a href="/anime/{{ rel.id }}" class="watch-season-card {% if rel.isCurrent is defined and rel.isCurrent %}current{% endif %}" title="{{ rel.name or rel.title }}">
+                    <div class="watch-season-card-bg" style="background-image: url('{{ rel.image or rel.poster or 'https://via.placeholder.com/200x300?text=No+Image' }}');"></div>
+                    <div class="watch-season-card-overlay">
+                        <span class="watch-season-card-label">{{ season_label }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Related Anime Section -->
+        {% set related_items = anime.get('recommendedAnimes', []) %}
+        {% if related_items and related_items|length > 0 %}
+        <div class="watch-sidebar-section">
+            <div class="watch-sidebar-section-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                    <rect x="1" y="3" width="22" height="5" rx="1" ry="1"></rect>
+                </svg>
+                <span>Related</span>
+            </div>
+            <div class="watch-related-list">
+                {% for rec in related_items[:8] %}
+                <a href="/anime/{{ rec.id }}" class="watch-related-item" title="{{ rec.name or rec.title }}">
+                    <img src="{{ rec.poster or 'https://via.placeholder.com/60x85?text=No+Image' }}" alt="{{ rec.name or rec.title }}" loading="lazy">
+                    <div class="watch-related-info">
+                        <span class="watch-related-title">{{ rec.name or rec.title }}</span>
+                        <span class="watch-related-meta">
+                            {% if rec.type %}{{ rec.type }}{% endif %}
+                            {% if rec.episodes_sub %} · {{ rec.episodes_sub }} eps{% endif %}
+                        </span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div> <!-- End watch-sidebar-column -->
+
+</div> <!-- End watch-main -->
+</div> <!-- End watch-layout -->
+</div> <!-- End container -->
+
+<!-- GIF Picker Modal -->
+<div class="gif-picker-overlay" id="gif-picker-overlay">
+    <div class="gif-picker-panel">
+        <div class="gif-picker-header">
+            <span>Choose a GIF</span>
+            <input type="text" class="gif-search-input" id="gif-search-input" placeholder="Search Tenor…"
+                autocomplete="off">
+            <button class="gif-picker-close" id="gif-close-btn" title="Close">✕</button>
+        </div>
+        <div class="gif-picker-body">
+            <div class="gif-picker-loading" id="gif-loading" style="display:flex;">
+                <div class="comment-spinner"></div>
+                <span>Loading GIFs…</span>
+            </div>
+            <div class="gif-grid" id="gif-grid"></div>
+        </div>
+        <div class="tenor-badge">Powered by <strong>Tenor</strong></div>
+    </div>
+</div>
+
+
+
+<!-- Fix Issue Modal -->
+<div id="fixIssueModal"
+    style="position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;">
+    <div
+        style="background: #121212; padding: 25px; border-radius: var(--radius-lg); width: 90%; max-width: 480px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); position: relative; transform: translateY(20px); transition: transform 0.2s;">
+        
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #ffffff;">Report Issue</h3>
+            <button id="closeFixModalIcon" style="background: none; border: none; color: #a1a1aa; cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; transition: color 0.2s;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.05); margin-bottom: 20px;"></div>
+
+        <!-- Warning Box -->
+        <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-md); padding: 18px; display: flex; gap: 15px; margin-bottom: 25px;">
+            <div style="color: #ef4444; flex-shrink: 0; margin-top: 2px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+            </div>
+            <div>
+                <h4 style="margin: 0 0 8px 0; color: #60a5fa; font-size: 1.05rem; font-weight: 600;">Wrong episode playing?</h4>
+                <p style="margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.5;">
+                    If the episode content doesn't match, clicking <strong style="color: #cbd5e1;">Fix it</strong> will clear the cached source and fetch a fresh stream from the server.
+                </p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button id="cancelFixBtn" style="background: none; border: none; color: #a1a1aa; font-weight: 600; font-size: 0.95rem; cursor: pointer; padding: 10px 20px; border-radius: var(--radius-sm); transition: color 0.2s;">Cancel</button>
+            <button id="submitFixBtn" style="background: #ef4444; color: white; border: none; font-weight: 600; font-size: 0.95rem; cursor: pointer; padding: 10px 24px; border-radius: var(--radius-md); transition: background 0.2s; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">Fix it</button>
+        </div>
+    </div>
+</div>
+
+<!-- Watch Together Room Create Modal -->
+<div id="wtQuickCreateModal" class="watch-together-modal" aria-hidden="true">
+    <div class="watch-together-panel" role="dialog" aria-modal="true" aria-labelledby="wtQuickCreateTitle">
+        <div class="watch-together-header">
+            <div>
+                <span class="watch-together-kicker">Room</span>
+                <h3 id="wtQuickCreateTitle">Watch Together</h3>
+            </div>
+            <button id="wtQuickCreateClose" class="watch-together-icon-btn" type="button" title="Close">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div id="wtQuickStatus" class="watch-together-status">Create a link-only room for this episode.</div>
+
+        <form id="wtQuickCreateForm" class="watch-together-form">
+            {% if not is_logged_in %}
+            <label class="watch-together-field">
+                <span>Display name</span>
+                <input id="wtQuickName" class="watch-together-input" type="text" maxlength="40"
+                    placeholder="Guest name" autocomplete="nickname">
+            </label>
+            {% endif %}
+
+
+
+            <div class="watch-together-actions">
+                <button id="wtQuickCreateCancel" class="watch-together-secondary" type="button">Cancel</button>
+                <button id="wtQuickCreateSubmit" class="watch-together-primary" type="submit">Create Room</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toastContainer"
+    style="position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none;">
+</div>
+
+<!-- Cinematic Lights Off Overlay -->
+<div class="lights-off-overlay" id="lights-off-overlay"></div>
+
+<!-- Keyboard Shortcuts Modal -->
+<!-- Keyboard Shortcuts Modal -->
+<div class="modal" id="shortcuts-modal" style="display: none; align-items: center; justify-content: center; z-index: 10010;">
+    <div class="modal-backdrop" id="close-shortcuts-backdrop" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);"></div>
+    
+    <!-- Custom Style encapsulation for the beautiful modal -->
+    <style>
+        .sc-modal-content {
+            width: 95%;
+            max-width: 900px;
+            height: 580px;
+            background: #09090b;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #fff;
+            position: relative;
+            z-index: 10015;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            background: #09090b;
+        }
+
+        .sc-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #e4e4e7;
+            margin: 0;
+        }
+        
+        .sc-title span {
+            color: #52525b;
+            margin: 0 8px;
+            font-weight: 400;
+        }
+
+        .sc-close-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #a1a1aa;
+            cursor: pointer;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .sc-close-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .sc-body {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .sc-sidebar {
+            width: 240px;
+            background: #060608;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .sc-search-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .sc-search-input {
+            width: 100%;
+            background: #121215;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 6px;
+            padding: 10px 12px 10px 34px;
+            color: #fff;
+            font-size: 0.82rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .sc-search-input:focus {
+            border-color: #ffffff;
+            background: #16161a;
+        }
+
+        .sc-search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #52525b;
+            pointer-events: none;
+        }
+
+        .sc-tabs-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sc-tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 10px 12px;
+            border-radius: 6px;
+            color: #a1a1aa;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            outline: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sc-tab-btn svg {
+            color: #52525b;
+            transition: color 0.2s;
+        }
+
+        .sc-tab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .sc-tab-btn:hover svg {
+            color: #a1a1aa;
+        }
+
+        .sc-tab-btn.active {
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+        }
+
+        .sc-tab-btn.active svg {
+            color: #ffffff;
+        }
+
+        .sc-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: #09090b;
+        }
+
+        .sc-content-header {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #71717a;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sc-content-header svg {
+            color: #ffffff;
+        }
+
+        .sc-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sc-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 12px 18px;
+            transition: all 0.2s;
+        }
+
+        .sc-card:hover {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+
+        .sc-card-title {
+            color: #d4d4d8;
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+
+        .sc-card-keys {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sc-kbd {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 5px;
+            padding: 4px 8px;
+            font-family: var(--font-mono, monospace);
+            font-size: 0.78rem;
+            color: #e4e4e7;
+            font-weight: 600;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+            min-width: 24px;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .sc-join {
+            font-size: 0.8rem;
+            color: #52525b;
+            font-weight: 600;
+        }
+
+        .sc-or {
+            font-size: 0.75rem;
+            color: #71717a;
+            font-weight: 500;
+            margin: 0 4px;
+            font-style: italic;
+        }
+
+        .sc-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 0;
+            color: #71717a;
+            text-align: center;
+            gap: 8px;
+        }
+
+        .sc-empty h4 {
+            color: #d4d4d8;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .sc-modal-content {
+                height: 90%;
+            }
+            .sc-body {
+                flex-direction: column;
+            }
+            .sc-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                padding: 12px;
+                gap: 10px;
+            }
+            .sc-tabs-list {
+                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: 4px;
+            }
+            .sc-tab-btn {
+                white-space: nowrap;
+                width: auto;
+                padding: 6px 12px;
+            }
+            .sc-content {
+                padding: 16px;
+            }
+        }
+    </style>
+
+    <div class="sc-modal-content">
+        <div class="sc-header">
+            <h3 class="sc-title">Settings <span>/</span> <strong style="color: #fff;">Shortcuts</strong></h3>
+            <button type="button" class="sc-close-btn" id="close-shortcuts-modal" aria-label="Close">✕</button>
+        </div>
+
+        <div class="sc-body">
+            <!-- Sidebar with Search & Tabs -->
+            <div class="sc-sidebar">
+                <div class="sc-search-wrapper">
+                    <input type="text" id="sc-search" class="sc-search-input" placeholder="Search shortcuts..." autocomplete="off">
+                    <svg class="sc-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+
+                <div class="sc-tabs-list">
+                    <button class="sc-tab-btn active" data-cat="global">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
+                        </svg>
+                        Global / App
+                    </button>
+                    <button class="sc-tab-btn" data-cat="watching">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="8" y1="6" x2="21" y2="6"/>
+                            <line x1="8" y1="12" x2="21" y2="12"/>
+                            <line x1="8" y1="18" x2="21" y2="18"/>
+                            <line x1="3" y1="6" x2="3.01" y2="6"/>
+                            <line x1="3" y1="12" x2="3.01" y2="12"/>
+                            <line x1="3" y1="18" x2="3.01" y2="18"/>
+                        </svg>
+                        Watching / Episodes
+                    </button>
+                    <button class="sc-tab-btn" data-cat="player">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                        Player Controls
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Area (rendered dynamically) -->
+            <div class="sc-content">
+                <h4 class="sc-content-header" id="sc-cat-header">
+                    <svg id="sc-cat-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
+                    </svg>
+                    <span id="sc-cat-name">Global / App</span>
+                </h4>
+                <div class="sc-list" id="sc-shortcuts-list">
+                    <!-- populated by Javascript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Self-contained JS module for beautiful shortcuts filtering & rendering -->
+    <script>
+        (function() {
+            const shortcutsData = [
+                {
+                    category: 'global',
+                    title: 'Open Shortcuts Help',
+                    keys: [['?']]
+                },
+                {
+                    category: 'global',
+                    title: 'Focus Search Bar',
+                    keys: [['/']]
+                },
+                {
+                    category: 'global',
+                    title: 'Close Modals / Cancel',
+                    keys: [['Esc']]
+                },
+                {
+                    category: 'watching',
+                    title: 'Toggle Episode Sidebar (PC)',
+                    keys: [['T']]
+                },
+                {
+                    category: 'watching',
+                    title: 'Toggle Cinematic Lights',
+                    keys: [['C']]
+                },
+                {
+                    category: 'watching',
+                    title: 'Toggle Native Player',
+                    keys: [['N']]
+                },
+                {
+                    category: 'player',
+                    title: 'Play / Pause Video',
+                    keys: [['Space'], ['K']]
+                },
+                {
+                    category: 'player',
+                    title: 'Seek Forward 5-10s',
+                    keys: [['→'], ['L']]
+                },
+                {
+                    category: 'player',
+                    title: 'Seek Backward 5-10s',
+                    keys: [['←'], ['J']]
+                },
+                {
+                    category: 'player',
+                    title: 'Increase Volume 5%',
+                    keys: [['↑']]
+                },
+                {
+                    category: 'player',
+                    title: 'Decrease Volume 5%',
+                    keys: [['↓']]
+                },
+                {
+                    category: 'player',
+                    title: 'Mute / Unmute Audio',
+                    keys: [['M']]
+                },
+                {
+                    category: 'player',
+                    title: 'Toggle Fullscreen Player',
+                    keys: [['F']]
+                }
+            ];
+
+            const categoryHeaders = {
+                global: {
+                    name: 'Global / App',
+                    icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>`
+                },
+                watching: {
+                    name: 'Watching / Episodes',
+                    icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`
+                },
+                player: {
+                    name: 'Player Controls',
+                    icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`
+                }
+            };
+
+            let activeCategory = 'global';
+            let searchQuery = '';
+
+            const listEl = document.getElementById('sc-shortcuts-list');
+            const searchEl = document.getElementById('sc-search');
+            const tabButtons = document.querySelectorAll('.sc-tab-btn');
+            const headerNameEl = document.getElementById('sc-cat-name');
+            const headerIconEl = document.getElementById('sc-cat-header');
+
+            function renderKeys(keys) {
+                return keys.map(group => {
+                    return group.map(k => `<kbd class="sc-kbd">${k}</kbd>`).join('<span class="sc-join">+</span>');
+                }).join('<span class="sc-or">or</span>');
+            }
+
+            function renderShortcuts() {
+                // If search query is present, we filter all shortcuts. Otherwise, filter by active category.
+                let filtered = shortcutsData;
+                
+                if (searchQuery.trim() !== '') {
+                    filtered = shortcutsData.filter(item => 
+                        item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        item.category.toLowerCase().includes(searchQuery.toLowerCase())
+                    );
+                    headerNameEl.textContent = 'Search Results';
+                    headerIconEl.firstElementChild.outerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`;
+                } else {
+                    filtered = shortcutsData.filter(item => item.category === activeCategory);
+                    const headInfo = categoryHeaders[activeCategory];
+                    headerNameEl.textContent = headInfo.name;
+                    headerIconEl.firstElementChild.outerHTML = headInfo.icon;
+                }
+
+                if (filtered.length === 0) {
+                    listEl.innerHTML = `
+                        <div class="sc-empty">
+                            <h4>No shortcuts found</h4>
+                            <p style="font-size:0.8rem;margin:0;">Try typing another query or switching tabs.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                listEl.innerHTML = filtered.map(item => `
+                    <div class="sc-card">
+                        <span class="sc-card-title">${item.title}</span>
+                        <div class="sc-card-keys">
+                            ${renderKeys(item.keys)}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Tab Switching Event listeners
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activeCategory = btn.dataset.cat;
+                    
+                    // Clear search on tab switch for better UX
+                    searchEl.value = '';
+                    searchQuery = '';
+                    
+                    renderShortcuts();
+                });
+            });
+
+            // Live Search input event listener
+            if (searchEl) {
+                searchEl.addEventListener('input', (e) => {
+                    searchQuery = e.target.value;
+                    renderShortcuts();
+                });
+            }
+
+            // Init call
+            renderShortcuts();
+        })();
+    </script>
+</div>
+
+{% endblock %}
+
+
+<!-- Thumbnail tooltip & mobile control styles moved to watch.css -->
+
+{% block extra_js %}
+<script>
+    window.WATCH_CONFIG = {
+        animeId: '{{ anime_id or eps_title.split("?")[0] }}',
+        anilistId: {{ (anime.get('anilistId') or anime.get('alID') or 'null') | tojson | safe }},
+        episodeNumber: {{ episode_number or 1 }},
+        language: '{{ lang }}',
+        provider: '{{ selected_server or "" }}',
+        providers: [{% if sorted_providers %}{% for p in sorted_providers %}'{{ p }}'{% if not loop.last %}, {% endif %}{% endfor %}{% elif episodes and episodes.providers_map %}{% for p in episodes.providers_map.keys() %}'{{ p }}'{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}],
+        isLoggedIn: {% if is_logged_in %} true{% else %} false{% endif %},
+        serverProgress: {{ server_progress | tojson | safe if server_progress else '{}' }},
+        malId: {{ mal_id | tojson | safe if mal_id else 'null' }},
+        animeName: {{ (anime.name or anime.title or anime_title or '') | tojson | safe }},
+        poster: {{ (anime.get('coverImage') or anime.get('poster') or anime.get('image') or '') | tojson | safe }},
+        episodeImage: {{ (episode_image or '') | tojson | safe }},
+        episodeTitle: {{ (episode_title or '') | tojson | safe }},
+        username: {{ (session.get('username') or '') | tojson | safe }},
+        avatar: {{ (session.get('avatar') or '') | tojson | safe }},
+        encSources: '{{ enc_sources or "" }}',
+        token: '{{ cipher_key_obfuscated or "" }}'
+    };
+</script>
+<script src="{{ url_for('static', filename='js/watch.js') }}"></script>
+<script>
+    window.COMMENTS_CONFIG = {
+        animeId: '{{ anime_id or eps_title.split("?")[0] }}',
+        episodeNumber: {{ episode_number or 1 }},
+        isLoggedIn: {% if session.get('username') %} true{% else %} false{% endif %},
+        username: '{{ session.get("username") or "" }}',
+        avatar: '{{ session.get("avatar") or "" }}',
+        userId: '{{ session.get("_id") or "" }}',
+    };
+</script>
+<script src="{{ url_for('static', filename='js/comments.js') }}"></script>
+<script>
+    // Lock episode sidebar height to match video player area
+    (function() {
+        function syncSidebarHeight() {
+            var watchMain = document.querySelector('.watch-main');
+            var videoWrapper = document.querySelector('.video-wrapper');
+            var quickBar = document.querySelector('.watch-quick-bar');
+            if (!watchMain || !videoWrapper) return;
+
+            var totalH = videoWrapper.offsetHeight;
+            if (quickBar) totalH += quickBar.offsetHeight + 15; // 15px for margin
+
+            watchMain.style.setProperty('--player-area-height', totalH + 'px');
+        }
+
+        // Run on load and resize
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                syncSidebarHeight();
+                window.addEventListener('resize', syncSidebarHeight);
+            });
+        } else {
+            syncSidebarHeight();
+            window.addEventListener('resize', syncSidebarHeight);
+        }
+
+        // Also run after images load (player dimensions may change)
+        window.addEventListener('load', syncSidebarHeight);
+    })();
+</script>
+{% endblock %}
+
+<!-- // TODO: Add a "Mark as Watched" button that appears after 80% of the video is watched, allowing users to manually mark
+the episode as watched if auto-detection fails. + Maybe also a "Report Playback Issue" button that opens a feedback form
+with the current provider/source pre-filled, so users can easily report issues which can help improve the fallback
+system. + UI improvements: Show a small toast notification when auto-fallback occurs, e.g. "HLS source failed, switching
+to Embed... 67676767(brainrot)" so users are aware of what's happening.

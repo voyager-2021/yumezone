@@ -1,0 +1,1222 @@
+{% extends "shared/base.html" %}
+
+{% block title %}{{ anime.name or anime.title or 'Anime' }} - YumeZone{% endblock %}
+{% block meta_description %}Watch {{ anime.name or anime.title }} online. {{ (anime.description or anime.synopsis or
+'')[:150] }}{% endblock %}
+{% block og_title %}{{ self.title() }}{% endblock %}
+{% block og_description %}{{ self.meta_description() }}{% endblock %}
+{% block og_image %}{{ anime.poster or anime.image or anime.banner }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/info.css') }}">
+<script src="{{ url_for('static', filename='js/music.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/watch_order.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="anime-hero" style="position: relative;">
+    <!-- Skeleton Overlay -->
+    <div class="skeleton-container" style="background: var(--bg-primary);">
+        <div class="skeleton skeleton-info-hero"></div>
+        <div class="container" style="position: relative; margin-top: -150px; z-index: 2;">
+            <div class="anime-info-grid">
+                <div class="skeleton" style="width: 100%; aspect-ratio: 2/3; border-radius: var(--radius-lg);"></div>
+                <div style="padding-top: var(--space-md);">
+                    <div class="skeleton skeleton-title" style="width: 60%; height: 40px; margin-bottom: 16px;"></div>
+                    <div class="skeleton skeleton-text" style="width: 40%; height: 20px; margin-bottom: 32px;"></div>
+                    
+                    <div style="display: flex; gap: 24px; margin-bottom: 32px; padding: 16px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+                        <div class="skeleton skeleton-text" style="width: 60px; height: 40px;"></div>
+                        <div class="skeleton skeleton-text" style="width: 60px; height: 40px;"></div>
+                        <div class="skeleton skeleton-text" style="width: 60px; height: 40px;"></div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px; margin-bottom: 32px;">
+                        <div class="skeleton" style="width: 80px; height: 32px; border-radius: 20px;"></div>
+                        <div class="skeleton" style="width: 80px; height: 32px; border-radius: 20px;"></div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 16px;">
+                        <div class="skeleton" style="width: 180px; height: 50px; border-radius: var(--radius-md);"></div>
+                        <div class="skeleton" style="width: 180px; height: 50px; border-radius: var(--radius-md);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner Background -->
+    <div class="anime-banner">
+        <img src="{{ anime.banner or anime.poster }}" alt="{{ anime.name or anime.title }}">
+    </div>
+
+    <div class="container">
+        <div class="anime-info-container">
+            <div class="anime-info-grid">
+                <!-- Poster -->
+                <div class="anime-poster">
+                    <img src="{{ anime.poster or anime.image }}" alt="{{ anime.name or anime.title }}">
+                    
+                    <div class="quick-meta-list">
+                        {% if anime.aired_start %}
+                        <div class="quick-meta-item">
+                            <span class="label">Started</span>
+                            <span class="value">{{ anime.aired_start }}</span>
+                        </div>
+                        {% endif %}
+                        {% if anime.aired_end %}
+                        <div class="quick-meta-item">
+                            <span class="label">Finished</span>
+                            <span class="value">{{ anime.aired_end }}</span>
+                        </div>
+                        {% elif anime.status == 'Currently Airing' %}
+                        <div class="quick-meta-item">
+                            <span class="label">Finished</span>
+                            <span class="value">?</span>
+                        </div>
+                        {% endif %}
+                        {% if anime.stats and anime.stats.source %}
+                        <div class="quick-meta-item">
+                            <span class="label">Source</span>
+                            <span class="value">{{ anime.stats.source }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Details -->
+                <div class="anime-details">
+                    <h1 class="anime-title">{{ anime.name or anime.title }}</h1>
+
+                    {% if anime.jname or anime.japanese_title %}
+                    <p class="anime-alt-title">{{ anime.jname or anime.japanese_title }}</p>
+                    {% endif %}
+
+                    <!-- Stats -->
+                    <div class="anime-stats">
+                        {% if anime.stats and anime.stats.rating %}
+                        <div class="stat-item">
+                            <div class="stat-value">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" style="vertical-align: middle; margin-right: 2px;">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                {{ (anime.stats.rating|float / 10) | round(1) }}
+                            </div>
+                            <div class="stat-label">Rating</div>
+                        </div>
+                        {% endif %}
+                        {% if anime.stats and anime.stats.type %}
+                        <div class="stat-item">
+                            <div class="stat-value">{{ anime.stats.type }}</div>
+                            <div class="stat-label">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                                    <line x1="7" y1="2" x2="7" y2="22"></line>
+                                    <line x1="17" y1="2" x2="17" y2="22"></line>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                </svg>
+                                Type
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if anime.stats and anime.stats.duration %}
+                        <div class="stat-item">
+                            <div class="stat-value">{{ anime.stats.duration }}</div>
+                            <div class="stat-label">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                Duration
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if anime.status %}
+                        <div class="stat-item">
+                            <div class="stat-value">{{ anime.status | title }}</div>
+                            <div class="stat-label">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                </svg>
+                                Status
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Episode Status Pills -->
+                    <div class="ep-status-pills">
+                        {% if anime.total_sub_episodes and anime.total_sub_episodes > 0 %}
+                        <div class="ep-pill sub" title="Subtitled Episodes">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            <span>SUB {% if anime.released_episodes is defined and anime.released_episodes !=
+                                anime.total_sub_episodes %}{{ anime.released_episodes }}/{{ anime.total_sub_episodes
+                                }}{% else %}{{ anime.total_sub_episodes }}{% endif %}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if anime.total_dub_episodes and anime.total_dub_episodes > 0 %}
+                        <div class="ep-pill dub" title="Dubbed Episodes">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            </svg>
+                            <span>DUB {% if anime.released_episodes is defined and anime.released_episodes !=
+                                anime.total_dub_episodes %}{{ anime.released_episodes }}/{{ anime.total_dub_episodes
+                                }}{% else %}{{ anime.total_dub_episodes }}{% endif %}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="anime-actions" style="margin-bottom: var(--space-xl);">
+                        {% set max_available_ep = anime.released_episodes if (anime.released_episodes is defined and
+                        anime.released_episodes and anime.released_episodes > 0) else (anime.total_sub_episodes or 0) %}
+                        {% set raw_next_ep = (user_watched_episodes + 1) if (user_watched_episodes and
+                        user_watched_episodes > 0) else 1 %}
+                        {% set next_watch_ep = raw_next_ep if (max_available_ep == 0 or raw_next_ep <= max_available_ep)
+                            else max_available_ep %} {% set is_caught_up=(max_available_ep> 0 and raw_next_ep >
+                            max_available_ep) %}
+                            <a href="/watch/{{ anime.id or current_season_id }}/ep-{{ next_watch_ep }}"
+                                class="btn btn-primary btn-lg" id="watch-now-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                </svg>
+                                <span id="watch-now-text">{% if is_caught_up %}Caught Up! Ep {{ next_watch_ep }}{% elif
+                                    next_watch_ep > 1 %}Continue Ep {{ next_watch_ep }}{% else %}Watch Now{% endif
+                                    %}</span>
+                            </a>
+                            <button class="btn btn-secondary btn-lg" id="add-to-watchlist"
+                                data-anime-id="{{ anime.id or current_season_id }}"
+                                data-anime-title="{{ anime.name or anime.title }}">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                                </svg>
+                                <span id="watchlist-btn-text">Add to List</span>
+                            </button>
+                    </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                            const watchBtn = document.getElementById('watch-now-btn');
+                            const watchText = document.getElementById('watch-now-text');
+                            const animeId = "{{ anime.id or current_season_id }}";
+                            const maxAvailableEp = parseInt("{{ max_available_ep }}") || 0;
+
+                            if (watchBtn && animeId) {
+                                try {
+                                    let lastWatchedEpNum = null;
+                                    let maxTimestamp = 0;
+
+                                    for (let i = 0; i < localStorage.length; i++) {
+                                        const key = localStorage.key(i);
+                                        if (key && key.startsWith(`yumeResume_${animeId}_ep`)) {
+                                            try {
+                                                const data = JSON.parse(localStorage.getItem(key));
+                                                const lastUpdated = data.lastUpdated || 0;
+                                                if (lastUpdated > maxTimestamp) {
+                                                    maxTimestamp = lastUpdated;
+                                                    lastWatchedEpNum = data.episodeNumber || parseInt(key.split('_ep')[1]);
+                                                }
+                                            } catch (e) { }
+                                        }
+                                    }
+
+                                    if (lastWatchedEpNum) {
+                                        const anilistNextEp = parseInt("{{ next_watch_ep }}") || 1;
+
+                                        // Only override if local storage suggests an episode >= the one AniList says is next
+                                        if (lastWatchedEpNum >= anilistNextEp) {
+                                            // Clamp to max available episodes so we don't link to unreleased episodes
+                                            let targetEp = lastWatchedEpNum;
+                                            let caughtUp = false;
+                                            if (maxAvailableEp > 0 && targetEp > maxAvailableEp) {
+                                                targetEp = maxAvailableEp;
+                                                caughtUp = true;
+                                            }
+                                            watchBtn.href = `/watch/${animeId}/ep-${targetEp}`;
+                                            if (watchText) {
+                                                watchText.textContent = caughtUp
+                                                    ? `Caught Up! Ep ${targetEp}`
+                                                    : `Continue Ep ${targetEp}`;
+                                            }
+                                        }
+                                    }
+                                } catch (e) { console.error("Error updating watch button:", e); }
+                            }
+                        });
+                    </script>
+
+                    <!-- Genres -->
+                    {% if anime.genres %}
+                    <div class="anime-genres">
+                        {% if anime.studios and anime.studios|length > 0 %}
+                        <a href="/studio/{{ anime.studios[0].id }}" class="genre-tag studio-tag">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px; vertical-align: middle;">
+                                <path d="M3 21v-4m0 0V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            </svg>
+                            {{ anime.studios[0].name }}
+                        </a>
+                        {% endif %}
+                        {% for genre in anime.genres %}
+                        <a href="/genre/{{ genre | lower | replace(' ', '-') }}" class="genre-tag">{{ genre }}</a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Next Episode Schedule UI -->
+                    {% if next_episode_schedule and next_episode_schedule.airingTimestamp %}
+                    {% set next_ep = next_episode_schedule.episode %}
+                    <div class="next-episode-banner"
+                        style="position: relative; margin-bottom: var(--space-xl); background: var(--bg-surface); padding: var(--space-lg); border-radius: var(--radius-xl); border: 1px solid var(--border-color); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md); overflow: hidden;">
+                        <div
+                            style="position: absolute; top: -50px; right: -50px; width: 300px; height: 300px; background: radial-gradient(circle, var(--accent) 0%, transparent 70%); filter: blur(40px); opacity: 0.15; pointer-events: none;">
+                        </div>
+                        <div style="position: relative; z-index: 1;">
+                            <h3
+                                style="margin-bottom: var(--space-xs); font-size: 1.25rem; color: var(--text-primary); display: flex; align-items: center; gap: var(--space-sm); font-weight: 700;">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                    style="filter: drop-shadow(0 0 8px rgba(var(--accent-rgb, 255,255,255), 0.5));">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                Episode {{ next_ep if next_ep else '??' }} Airs In
+                            </h3>
+                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted); padding-left: 32px;">
+                                Don't miss the upcoming release!</p>
+                        </div>
+                        <div class="countdown-timer" id="next-ep-countdown"
+                            data-timestamp="{{ next_episode_schedule.airingTimestamp }}"
+                            style="display: flex; gap: var(--space-sm); position: relative; z-index: 1;">
+                            <div class="time-block"
+                                style="text-align: center; background: var(--bg-elevated); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-md); min-width: 60px; border: 1px solid var(--border-color);">
+                                <span class="days"
+                                    style="display: block; font-size: 1.5rem; font-weight: 800; font-family: var(--font-mono); color: var(--text-primary);">--</span>
+                                <span class="label"
+                                    style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Days</span>
+                            </div>
+                            <div class="time-block"
+                                style="text-align: center; background: var(--bg-elevated); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-md); min-width: 60px; border: 1px solid var(--border-color);">
+                                <span class="hours"
+                                    style="display: block; font-size: 1.5rem; font-weight: 800; font-family: var(--font-mono); color: var(--text-primary);">--</span>
+                                <span class="label"
+                                    style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Hrs</span>
+                            </div>
+                            <div class="time-block"
+                                style="text-align: center; background: var(--bg-elevated); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-md); min-width: 60px; border: 1px solid var(--border-color);">
+                                <span class="minutes"
+                                    style="display: block; font-size: 1.5rem; font-weight: 800; font-family: var(--font-mono); color: var(--text-primary);">--</span>
+                                <span class="label"
+                                    style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Mins</span>
+                            </div>
+                            <div class="time-block"
+                                style="text-align: center; background: var(--bg-elevated); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-md); min-width: 60px; border: 1px solid var(--accent); box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);">
+                                <span class="seconds"
+                                    style="display: block; font-size: 1.5rem; font-weight: 800; font-family: var(--font-mono); color: var(--accent); text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);">--</span>
+                                <span class="label"
+                                    style="font-size: 0.7rem; color: var(--accent); text-transform: uppercase; font-weight: 700; letter-spacing: 1px;">Secs</span>
+                            </div>
+                        </div>
+                        <script src="{{ url_for('static', filename='js/info.js') }}"></script>
+                    </div>
+                    {% endif %}
+
+                    <!-- Synopsis -->
+                    <div class="anime-synopsis">
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-sm);">
+                            <h3 style="margin-bottom: 0;">Synopsis</h3>
+                            {% if anime.anilistId or anime.malId %}
+                            <div class="external-links" style="margin-top: 0; margin-bottom: 0;">
+                                {% if anime.anilistId %}
+                                <a href="https://anilist.co/anime/{{ anime.anilistId }}" target="_blank"
+                                    class="external-pill anilist" title="View on AniList">
+                                    <img src="https://anilist.co/img/icons/icon.svg" alt="AniList">
+                                </a>
+                                {% endif %}
+                                {% if anime.malId %}
+                                <a href="https://myanimelist.net/anime/{{ anime.malId }}" target="_blank"
+                                    class="external-pill mal" title="View on MyAnimeList">
+                                    <img src="https://myanimelist.net/favicon.ico" alt="MAL">
+                                </a>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <p>{{ anime.description or anime.synopsis or 'No description available.' }}</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Tabbed Content Area ===== -->
+<div class="container" style="margin-top: var(--space-2xl);">
+
+    <!-- Tab Buttons -->
+    <div class="info-tabs" id="info-tabs">
+        <button class="info-tab-btn active" data-tab="overview">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="vertical-align: -2px; margin-right: 4px;">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            Overview
+        </button>
+        {% if anime.characters and anime.characters | length > 0 %}
+        <button class="info-tab-btn" data-tab="characters">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="vertical-align: -2px; margin-right: 4px;">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            Characters
+        </button>
+        {% endif %}
+        <button class="info-tab-btn" data-tab="music">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="vertical-align: -2px; margin-right: 4px;">
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
+            </svg>
+            Music
+        </button>
+        <button class="info-tab-btn" data-tab="watch-order">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                style="vertical-align: -2px; margin-right: 4px;">
+                <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            Watch Order
+        </button>
+    </div>
+
+    <!-- ===== Tab: Overview ===== -->
+    <div class="info-tab-content active" id="tab-overview">
+
+        {# Build a unified season list from prequels + current + sequels #}
+        {% set all_seasons = [] %}
+        {% set seen_season_ids = [] %}
+
+        {# Add prequels as earlier seasons #}
+        {% for p in anime.prequels %}
+        {% if (p.id|string) not in seen_season_ids %}
+        {% set _ = all_seasons.append(p) %}
+        {% set _ = seen_season_ids.append(p.id|string) %}
+        {% endif %}
+        {% endfor %}
+
+        {# Add current anime #}
+        {% set current_entry = {"id": anime.id or current_season_id, "name": anime.name or anime.title, "poster":
+        anime.poster, "isCurrent": true} %}
+        {% if (current_entry.id|string) not in seen_season_ids %}
+        {% set _ = all_seasons.append(current_entry) %}
+        {% set _ = seen_season_ids.append(current_entry.id|string) %}
+        {% endif %}
+
+        {# Add sequels as later seasons #}
+        {% for s in anime.sequels %}
+        {% if (s.id|string) not in seen_season_ids %}
+        {% set _ = all_seasons.append(s) %}
+        {% set _ = seen_season_ids.append(s.id|string) %}
+        {% endif %}
+        {% endfor %}
+
+        {# Show Seasons section if more than just current anime #}
+        {% if all_seasons | length > 1 %}
+        <section class="section" style="margin-bottom: var(--space-2xl);">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="18" rx="2" ry="2" />
+                        <line x1="8" y1="21" x2="8" y2="3" />
+                        <line x1="16" y1="21" x2="16" y2="3" />
+                    </svg>
+                    Seasons
+                </h2>
+            </div>
+            <div class="seasons-grid"
+                style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-lg);">
+                {% for entry in all_seasons %}
+                <a href="/anime/{{ entry.id }}"
+                    class="season-card {% if entry.isCurrent is defined and entry.isCurrent %}current{% endif %}"
+                    title="{{ entry.name or entry.title }}">
+                    {% if entry.isCurrent is defined and entry.isCurrent %}
+                    <div class="season-badge" style="background: var(--primary-color, #ff3e3e);">CURRENT</div>
+                    {% else %}
+                    <div class="season-badge"
+                        style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.1);">
+                        {{ entry.badge or (entry.relation or "SEASON") | upper }}</div>
+                    {% endif %}
+                    <img src="{{ entry.poster or entry.image }}" alt="{{ entry.name or entry.title }}" loading="lazy">
+                    <div class="season-overlay">
+                        <div class="season-title">{{ entry.name or entry.title }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {# Other related anime (not prequel/sequel) #}
+        {% if suggestions and suggestions.related and suggestions.related | length > 0 %}
+        {% set other_related = [] %}
+        {% for r in suggestions.related %}
+        {% if (r.id|string) not in seen_season_ids %}
+        {% set _ = other_related.append(r) %}
+        {% endif %}
+        {% endfor %}
+
+        {% if other_related | length > 0 %}
+        <section class="section" style="margin-bottom: var(--space-2xl);">
+            <div class="section-header">
+                <h2 class="section-title">Related</h2>
+            </div>
+            <div class="seasons-grid"
+                style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-lg);">
+                {% for r in other_related %}
+                <a href="/anime/{{ r.id }}" class="season-card" title="{{ r.name or r.title }}">
+                    <div class="season-badge"
+                        style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.1);">
+                        {{ (r.relation or "RELATED") | upper }}
+                    </div>
+                    <img src="{{ r.poster or r.image }}" alt="{{ r.name or r.title }}" loading="lazy">
+                    <div class="season-overlay">
+                        <div class="season-title">{{ r.name or r.title }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+        {% endif %}
+
+        {# Recommended #}
+        {% if suggestions and suggestions.recommended and suggestions.recommended | length > 0 %}
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Recommended</h2>
+            </div>
+            <div class="anime-grid">
+                {% for rec in suggestions.recommended[:6] %}
+                <a href="/anime/{{ rec.id }}" class="anime-card">
+                    <div class="anime-card-poster">
+                        <img src="{{ rec.poster or rec.image }}" alt="{{ rec.name or rec.title }}" loading="lazy">
+                        <div class="anime-card-badges">
+                            {% if rec.episodes and rec.episodes.sub %}
+                            <span class="badge badge-sub">{% if rec.episodes.released and rec.episodes.released !=
+                                rec.episodes.sub %}{{ rec.episodes.released }}/{{ rec.episodes.sub }}{% else %}{{
+                                rec.episodes.sub }}{% endif %}</span>
+                            {% endif %}
+                            {% if rec.episodes and rec.episodes.dub %}
+                            <span class="badge badge-dub">{{ rec.episodes.dub }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="anime-card-info">
+                        <h3 class="anime-card-title">{{ rec.name or rec.title }}</h3>
+                        <div class="anime-card-meta">
+                            {% if rec.type %}<span>{{ rec.type }}</span>{% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
+
+    <!-- ===== Tab: Characters & Voice Actors ===== -->
+    {% if anime.characters and anime.characters | length > 0 %}
+    <div class="info-tab-content" id="tab-characters">
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    Characters & Voice Actors
+                </h2>
+            </div>
+            <div class="char-va-grid">
+                {% for char_data in anime.characters %}
+                <div class="char-va-row">
+                    <!-- Character Side -->
+                    <div class="char-side">
+                        <div class="char-va-avatar">
+                            <img src="{{ char_data.character.poster }}" alt="{{ char_data.character.name }}"
+                                loading="lazy" onerror="this.src='https://via.placeholder.com/48?text=?'">
+                        </div>
+                        <div class="char-va-info">
+                            <div class="char-va-name">{{ char_data.character.name }}</div>
+                            <div
+                                class="char-va-role {% if char_data.character.cast == 'Main' %}main{% else %}supporting{% endif %}">
+                                {{ char_data.character.cast }}</div>
+                        </div>
+                    </div>
+                    <!-- Voice Actor Side -->
+                    {% if char_data.voiceActor %}
+                    <div class="va-side">
+                        <div class="char-va-avatar">
+                            <img src="{{ char_data.voiceActor.poster }}" alt="{{ char_data.voiceActor.name }}"
+                                loading="lazy" onerror="this.src='https://via.placeholder.com/48?text=?'">
+                        </div>
+                        <div class="char-va-info">
+                            <div class="char-va-name">{{ char_data.voiceActor.name }}</div>
+                            <div class="char-va-role va-lang">{{ char_data.voiceActor.cast }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+    {% endif %}
+
+    <!-- ===== Tab: Music (OP/ED Themes) ===== -->
+    <div class="info-tab-content" id="tab-music" data-anime-title="{{ anime.name or anime.title }}">
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18V5l12-2v13" />
+                        <circle cx="6" cy="18" r="3" />
+                        <circle cx="18" cy="16" r="3" />
+                    </svg>
+                    Music
+                </h2>
+            </div>
+
+            <!-- Loading State -->
+            <div id="music-loading" class="music-loading">
+                <div class="music-loading-spinner"></div>
+                <p>Loading themes...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="music-empty" class="music-empty" style="display: none;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+                    <path d="M9 18V5l12-2v13" />
+                    <circle cx="6" cy="18" r="3" />
+                    <circle cx="18" cy="16" r="3" />
+                </svg>
+                <p>No theme songs found for this anime.</p>
+            </div>
+
+            <!-- Themes Container -->
+            <div id="music-themes" style="display: none;">
+                <!-- Openings -->
+                <div id="music-openings" class="music-theme-group" style="display: none;">
+                    <h3 class="music-group-title">
+                        <span class="music-group-badge op">OP</span>
+                        Openings
+                    </h3>
+                    <div id="music-openings-list" class="music-list"></div>
+                </div>
+
+                <!-- Endings -->
+                <div id="music-endings" class="music-theme-group" style="display: none;">
+                    <h3 class="music-group-title">
+                        <span class="music-group-badge ed">ED</span>
+                        Endings
+                    </h3>
+                    <div id="music-endings-list" class="music-list"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===== Tab: Watch Order ===== -->
+    <div class="info-tab-content" id="tab-watch-order" data-anilist-id="{{ anime.anilistId or current_season_id }}">
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Watch Order
+                </h2>
+            </div>
+
+            <!-- Loading State -->
+            <div id="watch-order-loading" class="music-loading">
+                <div class="music-loading-spinner"></div>
+                <p>Loading watch order...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="watch-order-empty" class="music-empty" style="display: none;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                <p>No watch order found for this anime.</p>
+            </div>
+
+            <!-- Timeline Container -->
+            <div id="watch-order-container" class="watch-order-container" style="display: none;">
+                <!-- Timeline items will be dynamically injected here -->
+            </div>
+        </section>
+    </div>
+
+</div>
+
+<!-- ===== Watchlist Editor Modal ===== -->
+<div class="wl-modal-overlay" id="wl-modal-overlay">
+    <div class="wl-modal">
+        <div class="wl-modal-body">
+
+            <h2 class="wl-modal-title" id="wl-modal-title">{{ anime.name or anime.title }}</h2>
+            <p class="wl-modal-subtitle" id="wl-modal-subtitle">Update your list entry</p>
+
+            <div class="wl-form-grid">
+                <!-- Status -->
+                <div class="wl-form-group">
+                    <label class="wl-label">Status</label>
+                    <select class="wl-input" id="wl-status">
+                        <option value="CURRENT">Watching</option>
+                        <option value="PLANNING">Plan to Watch</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="DROPPED">Dropped</option>
+                        <option value="PAUSED">On Hold</option>
+                    </select>
+                </div>
+
+                <!-- Score -->
+                <div class="wl-form-group">
+                    <label class="wl-label">Score (0–10)</label>
+                    <input type="number" class="wl-input" id="wl-score" min="0" max="10" step="1" placeholder="—">
+                </div>
+
+                <!-- Episode Progress -->
+                <div class="wl-form-group full">
+                    <label class="wl-label" id="wl-ep-label">Episode Progress</label>
+                    <div class="wl-progress-row">
+                        <button type="button" class="wl-step-btn" id="wl-ep-minus">−</button>
+                        <input type="number" class="wl-input" id="wl-progress" min="0" style="text-align:center;">
+                        <button type="button" class="wl-step-btn" id="wl-ep-plus">+</button>
+                    </div>
+                </div>
+
+                <!-- Start Date -->
+                <div class="wl-form-group">
+                    <label class="wl-label">Start Date</label>
+                    <input type="date" class="wl-input" id="wl-start-date">
+                </div>
+
+                <!-- End Date -->
+                <div class="wl-form-group">
+                    <label class="wl-label">End Date</label>
+                    <input type="date" class="wl-input" id="wl-end-date">
+                </div>
+
+                <!-- Rewatches -->
+                <div class="wl-form-group">
+                    <label class="wl-label">Rewatches</label>
+                    <input type="number" class="wl-input" id="wl-rewatches" min="0" placeholder="0">
+                </div>
+
+                <!-- Notes -->
+                <div class="wl-form-group full">
+                    <label class="wl-label">Notes</label>
+                    <textarea class="wl-input" id="wl-notes" rows="3" placeholder="Add your personal notes…"></textarea>
+                </div>
+            </div>
+
+            <div class="wl-actions">
+                <button class="wl-btn-delete" id="wl-delete-btn" title="Remove from list" style="display:none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                </button>
+                <div style="display:flex; gap:10px; margin-left:auto;">
+                    <button class="wl-btn-cancel" id="wl-cancel-btn">Cancel</button>
+                    <button class="wl-btn-save" id="wl-save-btn">Save</button>
+                </div>
+            </div>
+
+        </div>
+        <img src="{{ anime.poster or anime.image }}" alt="{{ anime.name or anime.title }}" class="wl-modal-poster">
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ── Tab switching ──────────────────────────────────────────────────────────
+    document.querySelectorAll('.info-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+            document.querySelectorAll('.info-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.info-tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            const target = document.getElementById('tab-' + tabId);
+            if (target) target.classList.add('active');
+        });
+    });
+
+    // ── Watchlist Modal ────────────────────────────────────────────────────────
+    (() => {
+        const ANIME_ID = "{{ anime.id or current_season_id }}";
+        const ANIME_TITLE = "{{ (anime.name or anime.title) | e }}";
+        const TOTAL_EPS = parseInt("{{ anime.total_sub_episodes or 0 }}") || 0;
+
+        const overlay = document.getElementById('wl-modal-overlay');
+        const addBtn = document.getElementById('add-to-watchlist');
+        const btnText = document.getElementById('watchlist-btn-text');
+        const saveBtn = document.getElementById('wl-save-btn');
+        const deleteBtn = document.getElementById('wl-delete-btn');
+        const cancelBtn = document.getElementById('wl-cancel-btn');
+        const progressInput = document.getElementById('wl-progress');
+        const statusSelect = document.getElementById('wl-status');
+
+        let isOnList = false;   // tracks whether entry already exists
+
+        // ── Client-side AniList OAuth Token & ID Caching ───────────────────────────
+        let accessToken = null;
+        let viewerId = null;
+
+        async function initAccessToken() {
+            try {
+                const response = await fetch('/api/watchlist/token');
+                const data = await response.json();
+                if (data.access_token) {
+                    accessToken = data.access_token;
+                    viewerId = sessionStorage.getItem('__anilist_viewer_id');
+                    if (!viewerId) {
+                        const viewerData = await anilistRequest(`query { Viewer { id } }`);
+                        if (viewerData && viewerData.data && viewerData.data.Viewer) {
+                            viewerId = viewerData.data.Viewer.id;
+                            sessionStorage.setItem('__anilist_viewer_id', viewerId);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Error fetching AniList access token:', e);
+            }
+        }
+
+        async function ensureAuth() {
+            if (!accessToken || !viewerId) {
+                await initAccessToken();
+            }
+            return !!accessToken;
+        }
+
+        // ── Client-side Direct AniList Request Helper ──────────────────────────────
+        async function anilistRequest(query, variables = {}) {
+            if (!accessToken) return null;
+            try {
+                const response = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ query, variables })
+                });
+                if (response.status === 429) {
+                    const retryAfter = response.headers.get('Retry-After') || '60';
+                    return { _rate_limited: true, _retry_after: parseInt(retryAfter) || 60 };
+                }
+                if (!response.ok) return null;
+                const data = await response.json();
+                if (data.errors) {
+                    console.error('AniList GraphQL errors:', data.errors);
+                    return null;
+                }
+                return data;
+            } catch (e) {
+                console.error('AniList direct query failed:', e);
+                return null;
+            }
+        }
+
+        // ── Helpers ────────────────────────────────────────────────────────────
+        function openModal() {
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal() {
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function parseDateForInput(obj) {
+            if (!obj || !obj.year) return '';
+            const y = obj.year;
+            const m = String(obj.month || 1).padStart(2, '0');
+            const d = String(obj.day || 1).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        function parseDateToObj(val) {
+            if (!val) return { year: null, month: null, day: null };
+            const dt = new Date(val);
+            if (isNaN(dt.getTime())) return { year: null, month: null, day: null };
+            return { year: dt.getUTCFullYear(), month: dt.getUTCMonth() + 1, day: dt.getUTCDate() };
+        }
+
+        function updateEpLabel() {
+            const label = document.getElementById('wl-ep-label');
+            label.textContent = TOTAL_EPS > 0
+                ? `Episode Progress (${TOTAL_EPS} eps)`
+                : 'Episode Progress';
+            if (TOTAL_EPS > 0) progressInput.max = TOTAL_EPS;
+            else progressInput.removeAttribute('max');
+        }
+
+        function adjustProgress(delta) {
+            let val = (parseInt(progressInput.value) || 0) + delta;
+            if (val < 0) val = 0;
+            const max = parseInt(progressInput.max);
+            if (!isNaN(max) && max > 0 && val > max) val = max;
+            progressInput.value = val;
+            // Auto-complete
+            if (!isNaN(max) && max > 0 && val === max) statusSelect.value = 'COMPLETED';
+            if (!isNaN(max) && max > 0 && val < max && statusSelect.value === 'COMPLETED') statusSelect.value = 'CURRENT';
+        }
+
+        // ── Map local → AniList status ────────────────────────────────────────
+        const localToAL = {
+            watching: 'CURRENT',
+            plan_to_watch: 'PLANNING',
+            completed: 'COMPLETED',
+            dropped: 'DROPPED',
+            on_hold: 'PAUSED'
+        };
+
+        // ── Fetch current watchlist status on load ─────────────────────────────
+        async function loadStatus() {
+            try {
+                const authOk = await ensureAuth();
+                let statusData = null;
+
+                if (authOk && viewerId) {
+                    const statusQuery = `
+                    query ($userId: Int, $mediaId: Int) {
+                      MediaList(userId: $userId, mediaId: $mediaId) {
+                        id status progress
+                        media { episodes }
+                      }
+                    }
+                    `;
+                    const res = await anilistRequest(statusQuery, { userId: parseInt(viewerId), mediaId: parseInt(ANIME_ID) });
+                    if (res && res.data && res.data.MediaList) {
+                        const entry = res.data.MediaList;
+                        statusData = {
+                            in_watchlist: true,
+                            status: {
+                                'CURRENT': 'watching',
+                                'PLANNING': 'plan_to_watch',
+                                'COMPLETED': 'completed',
+                                'DROPPED': 'dropped',
+                                'PAUSED': 'on_hold'
+                            }[entry.status] || 'watching'
+                        };
+                    } else if (res && !res.data) {
+                        statusData = { in_watchlist: false };
+                    }
+                }
+
+                // Fallback
+                if (!statusData) {
+                    const r = await fetch(`/api/watchlist/status?anime_id=${encodeURIComponent(ANIME_ID)}`);
+                    statusData = await r.json();
+                }
+
+                if (statusData && statusData.in_watchlist) {
+                    isOnList = true;
+                    const statusLabelsMapping = {
+                        watching: 'Watching',
+                        plan_to_watch: 'Plan to Watch',
+                        completed: 'Completed',
+                        dropped: 'Dropped',
+                        on_hold: 'On Hold'
+                    };
+                    btnText.textContent = statusLabelsMapping[statusData.status] || 'In List';
+                    addBtn.classList.add('active');
+                }
+            } catch (e) { /* silently ignore */ }
+        }
+
+        // ── Fetch full entry to pre-populate modal ────────────────────────────
+        async function loadEntry() {
+            try {
+                const authOk = await ensureAuth();
+                if (authOk && viewerId) {
+                    const entryQuery = `
+                    query ($userId: Int, $mediaId: Int) {
+                      MediaList(userId: $userId, mediaId: $mediaId) {
+                        id status progress score(format: POINT_10_DECIMAL) repeat notes
+                        startedAt { year month day }
+                        completedAt { year month day }
+                      }
+                    }
+                    `;
+                    const res = await anilistRequest(entryQuery, { userId: parseInt(viewerId), mediaId: parseInt(ANIME_ID) });
+                    if (res && res.data && res.data.MediaList) {
+                        const entry = res.data.MediaList;
+                        return {
+                            status: entry.status,
+                            watched_episodes: entry.progress || 0,
+                            score: entry.score || '',
+                            repeat: entry.repeat || 0,
+                            notes: entry.notes || '',
+                            startedAt: entry.startedAt,
+                            completedAt: entry.completedAt
+                        };
+                    }
+                }
+
+                // Fallback
+                const r = await fetch(`/api/watchlist/entry?anime_id=${encodeURIComponent(ANIME_ID)}`);
+                if (!r.ok) return null;
+                const data = await r.json();
+                return data.entry || null;
+            } catch (e) { return null; }
+        }
+
+        // ── Open modal and populate fields ────────────────────────────────────
+        addBtn.addEventListener('click', async () => {
+            updateEpLabel();
+
+            statusSelect.value = 'CURRENT';
+            progressInput.value = 0;
+            document.getElementById('wl-score').value = '';
+            document.getElementById('wl-start-date').value = '';
+            document.getElementById('wl-end-date').value = '';
+            document.getElementById('wl-rewatches').value = 0;
+            document.getElementById('wl-notes').value = '';
+            deleteBtn.style.display = 'none';
+
+            if (isOnList) {
+                saveBtn.textContent = 'Loading…';
+                saveBtn.disabled = true;
+                openModal();
+
+                const entry = await loadEntry();
+                saveBtn.textContent = 'Save';
+                saveBtn.disabled = false;
+
+                if (entry) {
+                    const mappedStatus = localToAL[entry.status] || entry.status || 'CURRENT';
+                    statusSelect.value = ['CURRENT', 'PLANNING', 'COMPLETED', 'DROPPED', 'PAUSED'].includes(mappedStatus)
+                        ? mappedStatus : 'CURRENT';
+                    progressInput.value = entry.watched_episodes || 0;
+                    document.getElementById('wl-score').value = entry.score || '';
+                    document.getElementById('wl-start-date').value = parseDateForInput(entry.startedAt);
+                    document.getElementById('wl-end-date').value = parseDateForInput(entry.completedAt);
+                    document.getElementById('wl-rewatches').value = entry.repeat || 0;
+                    document.getElementById('wl-notes').value = entry.notes || '';
+                    deleteBtn.style.display = 'flex';
+                }
+            } else {
+                openModal();
+            }
+        });
+
+        // ── +/- buttons ───────────────────────────────────────────────────────
+        document.getElementById('wl-ep-minus').addEventListener('click', () => adjustProgress(-1));
+        document.getElementById('wl-ep-plus').addEventListener('click', () => adjustProgress(+1));
+
+        // ── Cancel / overlay click / ESC ──────────────────────────────────────
+        cancelBtn.addEventListener('click', closeModal);
+        overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && overlay.classList.contains('active')) closeModal();
+        });
+
+        // ── Save ──────────────────────────────────────────────────────────────
+        saveBtn.addEventListener('click', async () => {
+            let progress = parseInt(progressInput.value) || 0;
+            const max = parseInt(progressInput.max);
+            if (!isNaN(max) && max > 0 && progress > max) { progress = max; progressInput.value = max; }
+
+            const payload = {
+                anime_id: ANIME_ID,
+                status: statusSelect.value,
+                progress,
+                score: parseFloat(document.getElementById('wl-score').value) || 0,
+                repeat: parseInt(document.getElementById('wl-rewatches').value) || 0,
+                notes: document.getElementById('wl-notes').value,
+                startedAt: parseDateToObj(document.getElementById('wl-start-date').value),
+                completedAt: parseDateToObj(document.getElementById('wl-end-date').value)
+            };
+
+            const origText = saveBtn.textContent;
+            saveBtn.textContent = 'Saving…';
+            saveBtn.disabled = true;
+
+            try {
+                const authOk = await ensureAuth();
+                let success = false;
+                let errMsg = '';
+
+                if (authOk) {
+                    const SAVE_MUTATION = `
+                    mutation ($mediaId: Int, $status: MediaListStatus, $progress: Int,
+                              $score: Int, $repeat: Int, $notes: String,
+                              $startedAt: FuzzyDateInput, $completedAt: FuzzyDateInput) {
+                      SaveMediaListEntry(mediaId: $mediaId, status: $status, progress: $progress,
+                                         scoreRaw: $score, repeat: $repeat, notes: $notes,
+                                         startedAt: $startedAt, completedAt: $completedAt) {
+                        id status progress
+                      }
+                    }
+                    `;
+                    const vars = {
+                        mediaId: parseInt(payload.anime_id),
+                        status: payload.status,
+                        progress: payload.progress,
+                        score: parseInt(payload.score * 10), // expects POINT_100 (0-100)
+                        repeat: payload.repeat,
+                        notes: payload.notes,
+                        startedAt: payload.startedAt,
+                        completedAt: payload.completedAt
+                    };
+                    const res = await anilistRequest(SAVE_MUTATION, vars);
+                    if (res && res._rate_limited) {
+                        errMsg = 'AniList is rate limiting requests. Please try again in a minute.';
+                    } else if (res && res.data && res.data.SaveMediaListEntry) {
+                        success = true;
+                        // Trigger async MAL sync on backend
+                        fetch('/api/watchlist/sync_mal', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                anime_id: payload.anime_id,
+                                action: 'advanced_update',
+                                progress: payload.progress,
+                                status: payload.status,
+                                score: payload.score
+                            })
+                        }).catch(() => {});
+                    } else {
+                        errMsg = 'AniList mutation failed';
+                    }
+                } else {
+                    // Fallback
+                    const r = await fetch('/api/watchlist/advanced_update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await r.json();
+                    success = data.success;
+                    errMsg = data.message;
+                }
+
+                if (success) {
+                    isOnList = true;
+                    const statusLabelsMapping = {
+                        CURRENT: 'Watching',
+                        PLANNING: 'Plan to Watch',
+                        COMPLETED: 'Completed',
+                        DROPPED: 'Dropped',
+                        PAUSED: 'On Hold'
+                    };
+                    btnText.textContent = statusLabelsMapping[payload.status] || 'In List';
+                    addBtn.classList.add('active');
+                    deleteBtn.style.display = 'flex';
+                    closeModal();
+                } else {
+                    alert(errMsg.toLowerCase().includes('token') || errMsg.toLowerCase().includes('forbidden')
+                        ? 'Session expired — please refresh and try again.'
+                        : 'Error saving: ' + errMsg);
+                }
+            } catch (e) {
+                alert('Connection error. Please refresh and try again.');
+            } finally {
+                saveBtn.textContent = origText;
+                saveBtn.disabled = false;
+            }
+        });
+
+        // ── Delete ────────────────────────────────────────────────────────────
+        deleteBtn.addEventListener('click', async () => {
+            if (!confirm('Remove this anime from your list?')) return;
+            deleteBtn.disabled = true;
+
+            try {
+                const authOk = await ensureAuth();
+                let success = false;
+                let errMsg = '';
+
+                if (authOk) {
+                    const findQuery = `
+                    query ($userId: Int, $mediaId: Int) {
+                      MediaList(userId: $userId, mediaId: $mediaId) {
+                        id
+                      }
+                    }
+                    `;
+                    const findData = await anilistRequest(findQuery, { userId: parseInt(viewerId), mediaId: parseInt(ANIME_ID) });
+                    if (findData && findData.data && findData.data.MediaList) {
+                        const entryId = findData.data.MediaList.id;
+                        const deleteMutation = `
+                        mutation ($id: Int) {
+                          DeleteMediaListEntry(id: $id) {
+                            deleted
+                          }
+                        }
+                        `;
+                        const delData = await anilistRequest(deleteMutation, { id: entryId });
+                        if (delData && delData.data && delData.data.DeleteMediaListEntry && delData.data.DeleteMediaListEntry.deleted) {
+                            success = true;
+                        } else {
+                            errMsg = 'Failed to delete from AniList';
+                        }
+                    } else if (findData && findData._rate_limited) {
+                        errMsg = 'AniList is rate limiting requests. Please try again in a minute.';
+                    } else {
+                        errMsg = 'Could not find entry on AniList';
+                    }
+                } else {
+                    // Fallback
+                    const r = await fetch('/api/watchlist/remove', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ anime_id: ANIME_ID })
+                    });
+                    const data = await r.json();
+                    success = data.success;
+                    errMsg = data.message;
+                }
+
+                if (success) {
+                    isOnList = false;
+                    btnText.textContent = 'Add to List';
+                    addBtn.classList.remove('active');
+                    closeModal();
+                } else {
+                    alert('Error removing: ' + errMsg);
+                }
+            } catch (e) {
+                alert('Connection error.');
+            } finally {
+                deleteBtn.disabled = false;
+            }
+        });
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        loadStatus();
+    })();
+</script>
+{% endblock %}
