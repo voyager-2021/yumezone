@@ -23,7 +23,9 @@ client = MongoClient(
     maxPoolSize=50,
     minPoolSize=5,
     compressors=['snappy', 'zlib'],
-    tlsCAFile=certifi.where()
+    tlsCAFile=certifi.where(),
+    tlsAllowInvalidCertificates=False,
+    tlsAllowInvalidHostnames=False,
 )
 
 # Provide access to the database and collections
